@@ -1,5 +1,5 @@
 
-generate: gol.html triangulation.html ui.html
+generate: gol.html triangulation.html ui.html can.html
 
 %.html: %.py
 	@echo "Compiling [$<]"
