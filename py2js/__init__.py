@@ -244,8 +244,8 @@ class JS(object):
         self._classes[class_name] = node
         self._class_names.add(class_name)
         self.write("function %s() {" % class_name)
-        self.write("    if( this === _global_this){")
-        self.write("        t = new %s();" % class_name)
+        self.write("    if(!(this instanceof %s)){" % class_name)
+        self.write("        var t = new %s();" % class_name)
         self.write("        t.__init__.apply(t,arguments);")
         self.write("        return t;")
         self.write("    }")
