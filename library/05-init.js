@@ -50,8 +50,18 @@ function copy(iterator) {
     return items;
 }
 
-function _new(cls, arg) {
-    return new cls(arg);
+function _new(cls) {
+    var f;
+    var args = Array.prototype.slice.call(arguments, 1, arguments.length);
+    function F() {
+        // constructor returns **this**
+        return cls.apply(this, args);
+    }
+    F.prototype = cls.prototype;
+    f = new F();
+    f.constructor = cls;
+    return f;
+    //return new cls(arguments);
 }
 
 function js(obj) {
