@@ -15,10 +15,17 @@ def start_can():
       return "%f %f %f" % (self.x, self.y, self.energy);
 
   class CAN(object):
-    def __init__(self, num_cells):
+    def __init__(self, num_cells, random=True):
       self.cells = [];
-      for i in range(num_cells):
-        self.cells.append(Cell(Math.random(), Math.random()));
+      if random:
+        for i in range(num_cells):
+          self.cells.append(Cell(Math.random(), Math.random()));
+      else:
+        nearest_square = Math.floor(Math.sqrt(num_cells));
+        interval = 1.0/nearest_square;
+        for i in range(nearest_square):
+          for j in range(nearest_square):
+            self.cells.append(Cell(i*interval, j*interval));
 
     def inject(self, x, y, energy, radius):
       total_weight = 0.;
@@ -39,8 +46,7 @@ def start_can():
         cell1.new_energy = 0;
 
       for cell1 in self.cells:
-        if cell1.energy < 0.01:
-          cell1.energy = 0;
+        if cell1.energy == 0:
           continue;
         total_weight = 0;
         cells_to_change = [];
@@ -48,12 +54,13 @@ def start_can():
           dist_betw = cell1.dist_betw(cell2.x, cell2.y);
           if dist_betw < radius:
             total_weight += (radius - dist_betw)/radius;
-            cells_to_change.append(cell2);
-            cell2.new_energy += (radius - dist_betw)/radius*cell1.energy;
+            cells_to_change.append((cell2, (radius - dist_betw)/radius*cell1.energy));
 
-        normalizer = 1./total_weight;      
-        for cell2 in cells_to_change:
-          cell2.new_energy += cell2.new_energy * normalizer;
+        normalizer = 1./total_weight;
+        for cell_energy in cells_to_change:
+          cell2 = cell_energy[0];
+          energy = cell_energy[1];
+          cell2.new_energy += energy * normalizer;
 
       for cell1 in self.cells:
         cell1.energy = cell1.new_energy;
@@ -63,8 +70,7 @@ def start_can():
         cell1.new_energy = 0;
 
       for cell1 in self.cells:
-        if cell1.energy < 0.01:
-          cell1.energy = 0;
+        if cell1.energy == 0:
           continue;
         total_weight = 0;
         cells_to_change = [];
@@ -72,21 +78,29 @@ def start_can():
           dist_betw = cell1.dist_betw(cell2.x, cell2.y);
           if dist_betw < radius:
             total_weight += (radius - dist_betw)/radius;
-            cells_to_change.append(cell2);
-            cell2.new_energy += (radius - dist_betw)/radius*cell1.energy;
+            cells_to_change.append((cell2, (radius - dist_betw)/radius*cell1.energy));
 
         normalizer = 1./total_weight;      
-        for cell2 in cells_to_change:
-          cell2.new_energy += cell2.new_energy * normalizer;
+        for cell_energy in cells_to_change:
+          cell2 = cell_energy[0];
+          energy = cell_energy[1];
+          cell2.new_energy += energy * normalizer;
 
       for cell1 in self.cells:
         cell1.energy -= cell1.new_energy;
+       
+        # global inhib
+        if cell1.energy > 0.00001:
+          cell1.energy -= 0.00001;
+        else:
+          cell1.energy = 0.;
 
 
     def normalize(self):
       total_energy = 0;
       for cell in self.cells:
         total_energy += cell.energy;
+      
 
       for cell in self.cells:
         cell.energy /= total_energy;
@@ -95,7 +109,7 @@ def start_can():
       for cell1 in self.cells:
         cell1.new_energy = 0;
       for cell1 in self.cells:
-        if cell1.energy < 0.01:
+        if cell1.energy == 0:
           continue;
         x = cell1.x + dx;
         y = cell1.y + dy;
@@ -182,7 +196,7 @@ def start_can():
     elif event.keyCode == 40: # down
       key_down = False;
   
-  can = CAN(1000);
+  can = CAN(1000, True);
   can.inject(0.5, 0.5, 1, 0.2);
   can.normalize();
 
