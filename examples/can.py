@@ -90,6 +90,27 @@ def start_can():
 
       for cell in self.cells:
         cell.energy /= total_energy;
+        
+    def move(self, dx, dy):
+      for cell1 in self.cells:
+        cell1.new_energy = 0;
+      for cell1 in self.cells:
+        if cell1.energy < 0.01:
+          continue;
+        x = cell1.x + dx;
+        y = cell1.y + dy;
+        min_cell = None;
+        min_dist_betw = 1.0;
+        for cell2 in self.cells:
+          dist_betw = cell2.dist_betw(x, y);
+          if dist_betw < min_dist_betw:
+            min_dist_betw = dist_betw;
+            min_cell = cell2;
+        
+        min_cell.new_energy += cell1.energy;
+      
+      for cell1 in self.cells:
+        cell1.energy = cell1.new_energy;
 
     def draw(self):
       ctx = document.getElementById(js('canvas')).getContext(js('2d'));
@@ -115,6 +136,11 @@ def start_can():
   mouse_down = False;
   mouse_x = 0;
   mouse_y = 0;
+  
+  key_left = False;
+  key_right = False;
+  key_up = False;
+  key_down = False;
 
   @JavaScript
   def on_mouse_down(e):
@@ -131,6 +157,30 @@ def start_can():
     global mouse_x, mouse_y;
     mouse_x = e.pageX - e.target.offsetLeft;
     mouse_y = e.pageY - e.target.offsetTop;
+    
+  @JavaScript
+  def on_key_down(e):
+    global key_left, key_right, key_up, key_down;
+    if event.keyCode == 37: #left
+      key_left = True;
+    elif event.keyCode == 39: # right
+      key_right = True;
+    elif event.keyCode == 38: # up
+      key_up = True;
+    elif event.keyCode == 40: # down
+      key_down = True;
+
+  @JavaScript
+  def on_key_up(e):
+    global key_left, key_right, key_up, key_down;
+    if event.keyCode == 37: #left
+      key_left = False;
+    elif event.keyCode == 39: # right
+      key_right = False;
+    elif event.keyCode == 38: # up
+      key_up = False;
+    elif event.keyCode == 40: # down
+      key_down = False;
   
   can = CAN(1000);
   can.inject(0.5, 0.5, 1, 0.2);
@@ -140,6 +190,9 @@ def start_can():
   canvas.addEventListener("mousedown", on_mouse_down);
   canvas.addEventListener("mouseup", on_mouse_up);
   canvas.addEventListener("mousemove", on_mouse_move);
+  canvas.addEventListener("keydown", on_key_down);
+  canvas.addEventListener("keyup", on_key_up);
+  canvas.setAttribute("tabindex", "0");
 
 
   @JavaScript
@@ -147,8 +200,24 @@ def start_can():
     global mouse_x, mouse_y, mouse_down;
     if mouse_down:
       can.inject(mouse_x/768, mouse_y/768, 0.5, 0.2);
+    
+    vx = 0.;
+    vy = 0.;
+    if key_up:
+      vy = -0.05;
+    elif key_down:
+      vy = 0.05;
+    
+    if key_left:
+      vx = -0.05;
+    elif key_right:
+      vx = 0.05;
+    
+    if Math.abs(vx) > 0.01 or Math.abs(vy) > 0.01:
+      can.move(vx, vy);
+    
     can.excite(0.2);
-    #can.inhibit(0.16);
+    can.inhibit(0.16);
     can.normalize();
     can.draw();
     window.requestAnimationFrame(update);
