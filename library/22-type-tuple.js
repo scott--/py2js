@@ -79,7 +79,7 @@ _tuple.prototype.__hash__ = function () {
     return value;
 };
 
-_tuple.prototype.__len__ = function() {
+/*_tuple.prototype.__len__ = function() {
     if (this._len == -1) {
         var count = 0;
 
@@ -89,6 +89,14 @@ _tuple.prototype.__len__ = function() {
 
         this._len = count;
         return count;
+    } else
+        return this._len;
+};*/
+
+_tuple.prototype.__len__ = function() {
+    if (this._len == -1) {
+        this._len = this._items.length;
+        return this._items.length;
     } else
         return this._len;
 };
